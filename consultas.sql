@@ -218,34 +218,14 @@ SELECT * FROM visualizar_rascunhos(11);
 
 
 -- RF 20: ALTERAR RASCUNHO DE REQUISIÇÃO
--- PARA ATRIBUTOS STATUS DO CERTIFICADO:
-create or replace function alterar_rascunho(
-	id_cert integer,
-	new_cert bytea,
-	new_ch real,
-	new_df date,
-	new_di date,
-	new_obs text,
-	new_title character varying (255),
-	new_atv_id bigint
-)
-returns void as $$
-begin
-	update certificado set
-		certificado = new_cert,
-		carga_horaria = new_ch,
-		data_final = new_df,
-		data_inicial = new_di,
-		observacao = new_obs,
-		titulo = new_title,
-		atividade_id = new_atv_id
-	where
-		id = id_cert
-		and status_certificado = 'RASCUNHO';
-end; $$
-language plpgsql;
 
--- PARA ATRIBUTOS STATUS DA REQUISIÇÃO
+/*
+A função abaixo recebe como parâmetros o id de um certificado
+e os novos valores para os dados deste certificado. Os dados 
+só serão atualizados se o status da solicitação à qual
+este certificado está associado for "RASCUNHO"
+*/
+
 create or replace function alterar_rascunho2(
 	id_cert integer,
 	new_cert bytea,
@@ -276,6 +256,14 @@ language plpgsql;
 
 
 -- RF 21: ENVIAR SOLICITAÇÃO À COORDENAÇÃO
+
+/*
+A função abaixo recebe como parâmetro o id de uma requisição e,
+primeiramente, modifica o status da requisição para "TRANSITO". 
+Após isso, todos os certificados que estiverem associados à essa
+requisição terão o seu status modificado para "ENCAMINHADO_COORDENACAO"
+*/
+
 create or replace function atualizar_status_req(id_req integer)
 returns void as $$
 begin
@@ -296,36 +284,16 @@ end; $$
 language plpgsql;
 
 
+
 -- RF 22: ALTERAR SOLICITAÇÃO
--- PARA ATRIBUTOS STATUS DO CERTIFICADO
-create or replace function alterar_solicitacao(
-	id_cert integer,
-	new_cert bytea,
-	new_ch real,
-	new_df date,
-	new_di date,
-	new_obs text,
-	new_title character varying (255),
-	new_atv_id bigint
-)
-returns void as $$
-begin
-	update certificado set
-		certificado = new_cert,
-		carga_horaria = new_ch,
-		data_final = new_df,
-		data_inicial = new_di,
-		observacao = new_obs,
-		titulo = new_title,
-		atividade_id = new_atv_id
-	where
-		id = id_cert
-		and status_certificado = 'PROBLEMA';
-end; $$
-language plpgsql;
 
+/*
+A função abaixo recebe como parâmetros o id de um certificado
+e os novos valores para os dados deste certificado. Os dados 
+só serão atualizados se o status da solicitação à qual
+este certificado está associado for "PROBLEMA" ou "NEGADO"
+*/
 
--- PARA ATRIBUTOS STATUS DA REQUISIÇÃO
 create or replace function alterar_solicitacao2(
 	id_cert integer,
 	new_cert bytea,
@@ -356,6 +324,14 @@ language plpgsql;
 
 
 -- RF 23: VISUALIZAR DADOS DO DISCENTE
+
+/*
+A função abaixo recebe como parâmetro o id de um usuário
+(discente) e retorna uma tabela que contém os dados referentes
+à quantidade de horas complementares registradas para esse
+discente nos eixos ensino, extensão, gestão e pesquisa
+*/
+
 create or replace function extrato_horas(id_disc integer)
 returns table (
 	Ensino real,
