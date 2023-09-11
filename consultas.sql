@@ -478,6 +478,13 @@ SELECT * FROM modal_lixeira(486);
 
 -- CONSULTAS DO DASHBOARD
 -- BOX: MINHAS HORAS POR EIXO
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select, pega a quantidade de horas que o mesmo possui em seus respectivos eixos.
+Para demonstração foi escolhido o usuário de id = 96.
+*/
+
 CREATE OR REPLACE FUNCTION minhas_horas_por_eixo(id_referencia INT)
 RETURNS TABLE (
 	horas_ensino REAL,
@@ -497,6 +504,16 @@ SELECT * FROM minhas_horas_por_eixo(96);
 
 
 -- BOX: TOP SOLICITAÇÕES
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select em uma junção de tabelas, pega a soma da quantidade de horas
+que um usuário específico possui em suas respectivas requisições, bem como
+a data de submissão e o id da mesma, ordenando a tabela em ordem decrescente após isso.
+Vale lembrar que somente as requisições de status "ACEITAS" são contabilizadas.
+Para demonstração foi escolhido o usuário de id = 469.
+*/
+
 SELECT id_requisicao, status_requisicao FROM requisicao WHERE usuario_id=469; --TESTE
 
 CREATE OR REPLACE FUNCTION top_solicitacoes(id_referencia INT)
@@ -522,6 +539,14 @@ SELECT * FROM top_solicitacoes(469);
 
 
 -- BOX: SOLICITAÇÕES ARQUIVADAS
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select e da função COUNT(), pega a quantidade de requisições que
+foram arquivadas por um usuário específico. Para demonstração foi escolhido o
+usuário de id = 96.
+*/
+
 CREATE OR REPLACE FUNCTION total_solicitacoes_arquivadas(id_referencia INT)
 RETURNS TABLE (
     total_arquivadas BIGINT
@@ -541,6 +566,14 @@ SELECT DISTINCT arquivada FROM requisicao; -- Não há solicitações arquivadas
 
 -- BOX: SOLICITAÇÕES ACEITAS
 -- CONSIDERANDO DADOS DA REQUISIÇÃO
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select, seleciona requisições de um usuário específico que foram aceitas,
+apresentando o id, a data de submissao e a soma das horas da mesma.
+Para demonstração foi escolhido o usuário de id = 469.
+*/
+
 CREATE OR REPLACE FUNCTION solicitacoes_aceitas_0(id_referencia INT)
 RETURNS TABLE (
 	id_requisicao VARCHAR(255),
@@ -563,6 +596,15 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM solicitacoes_aceitas_0(469);
 
 -- CONSIDERANDO DADOS DO CERTIFICADO
+
+/*
+Nesta consulta é feito uma função que recebe o id de uma requisição como parâmetro e,
+através de um select em uma junção de tabelas, seleciona certificados de uma requisição específica,
+apresentando o carga horária do certificado, a carga horária aceita por certificado no barema,
+a carga horária máxima da atividade e o eixo da atividade.
+Para demonstração foi escolhido o usuário de id = 1102.
+*/
+
 CREATE OR REPLACE FUNCTION detalhes_certificados(id_referencia INTEGER)
 RETURNS TABLE (
 	carga_horaria REAL,
@@ -583,6 +625,14 @@ SELECT * FROM detalhes_certificados(1102);
 
 
 -- BOX: SOLICITAÇÕES REJEITADAS
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select, seleciona requisições de um usuário específico que foram rejeitadas,
+apresentando o id da mesma e sua observação.
+Para demonstração foi escolhido o usuário de id = 96.
+*/
+
 CREATE OR REPLACE FUNCTION solicitacoes_rejeitadas(id_referencia INTEGER)
 RETURNS TABLE (
 	id_requisicao VARCHAR(255),
@@ -599,6 +649,18 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM solicitacoes_rejeitadas(96);
 
 -- BOX: SOLICITAÇÕES REGISTRADAS POR ANO
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select e da função COUNT(), pega a quantidade de requisições que
+foram feitas pelo mesmo agrupadas pelos seus respectivos anos.
+Para demonstração foi escolhido o usuário de id = 96.
+
+OBS: Não haviam informações suficientes para afirmar se todas as tentativas de submissões deveriam
+ser contabilizadas ou apenas as ACEITAS deveriam. Na função feita apenas as requisições aceitas foram
+contabilizadas.
+*/
+
 CREATE OR REPLACE FUNCTION solicitacoes_por_ano(id_referencia INTEGER)
 RETURNS TABLE (
 	ano_submissao NUMERIC,
@@ -623,6 +685,13 @@ SELECT DISTINCT EXTRACT(YEAR FROM data_de_submissao) FROM requisicao;
 SELECT id_requisicao, status_requisicao FROM requisicao WHERE usuario_id=469; -- TESTE
 
 -- SOLICITAÇÕES ACEITAS
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select e da função COUNT(), pega a quantidade de requisições ACEITAS
+de um usuário específico. Para demonstração foi escolhido o usuário de id = 469.
+*/
+
 CREATE OR REPLACE FUNCTION total_aceitas(id_referencia INTEGER)
 RETURNS TABLE (
 	quantidade_aceitas BIGINT
@@ -638,6 +707,13 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM total_aceitas(469);
 
 -- SOLICITAÇÕES NEGADAS
+
+/*
+Nesta consulta é feito uma função que recebe o id de um usuário como parâmetro e,
+através de um select e da função COUNT(), pega a quantidade de requisições NEGADAS
+de um usuário específico. Para demonstração foi escolhido o usuário de id = 469.
+*/
+
 CREATE OR REPLACE FUNCTION total_negadas(id_referencia INTEGER)
 RETURNS TABLE (
 	quantidade_negadas BIGINT
