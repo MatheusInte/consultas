@@ -348,6 +348,13 @@ $$ language plpgsql;
 
 
 -- RF 24: VISUALIZAR FLUXO DA REQUISIÇÃO
+
+/*
+A função abaixo recebe como parâmetro o id de uma requisição
+e retorna uma tabela que contém os dados referentes
+à requisição pesquisada, como o id, status e descrição
+*/
+
 CREATE OR REPLACE FUNCTION visualizar_fluxo_requisicao(p_id_requisicao BIGINT)
 RETURNS TABLE(requisicao_id BIGINT, status_requisicao VARCHAR(30), descricao_requisicao TEXT) AS $$
 BEGIN
@@ -359,10 +366,17 @@ $$ LANGUAGE plpgsql;
 DROP FUNCTION visualizar_fluxo_requisicao(BIGINT)
 
 SELECT * FROM visualizar_fluxo_requisicao(431)
--- Adicionar restrição para não conter rascunho
+
 
 
 -- RF 26: VISUALIZAÇÃO DE PERFIL 
+
+/*
+A função abaixo recebe como parâmetro o id de um usuário (discente)
+e retorna uma tabela que contém os dados referentes
+ao usuário selecionado, como o nome completo, matrícula, email, tipo do perfil e telefone
+*/
+
 CREATE OR REPLACE FUNCTION visualizar_perfil(p_usuario_id BIGINT)
 RETURNS TABLE (nome_completo VARCHAR(255),matricula VARCHAR(255),email VARCHAR(255), perfil VARCHAR(255),telefone VARCHAR(255)) AS $$
 BEGIN
@@ -377,7 +391,12 @@ SELECT * FROM visualizar_perfil(43)
 
 
 -- RF 27: ARQUIVAR SOLICITAÇÃO
-SELECT * from requisicao where usuario_id = 431
+
+/*
+A função abaixo recebe como parâmetro o id de um usuário (discente) e o id de uma requisição
+e realiza a ação de modificar o status da requisição que contém o id do usuário para "arquivada" desde que ela não seja um rascunho.
+*/
+
 
 CREATE OR REPLACE FUNCTION arquivar_requisicao(p_usuario_id BIGINT, p_requisicao_id BIGINT)
 RETURNS void AS $$
@@ -424,6 +443,12 @@ CREATE TABLE requisicao_lixeira (
 DROP TABLE requisicao_lixeira
 SELECT * FROM requisicao_lixeira
 
+/*
+A função abaixo recebe como parâmetro o id de uma requisição e
+realiza a função de inserir a requisição na tabela requisicao_lixeira junto com a data de deleção
+e logo após deleta a requisição da tabela requisicao
+*/
+
 CREATE OR REPLACE FUNCTION deletar_requisicao(p_requisicao_id BIGINT)
 RETURNS VOID AS $$
 BEGIN
@@ -451,6 +476,13 @@ SELECT * FROM deletar_requisicao(250)
 
 
 -- RF 30: MODAL LIXEIRA
+
+/*
+A função abaixo recebe como parâmetro o id do usuário (discente)
+e retorna uma tabela contendo todas as requisições que possuem o id do usuário
+selecionado na tabela requisicao_lixeira
+*/
+
 CREATE OR REPLACE FUNCTION modal_lixeira(p_usuario_id BIGINT)
 RETURNS TABLE (
 	id BIGINT,
