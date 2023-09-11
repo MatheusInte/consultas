@@ -451,7 +451,8 @@ SELECT * FROM visualizar_perfil(43)
 
 /*
 A função abaixo recebe como parâmetro o id de um usuário (discente) e o id de uma requisição
-e realiza a ação de modificar o status da requisição que contém o id do usuário para "arquivada" desde que ela não seja um rascunho.
+e realiza a ação de modificar o status da coluna "arquivada" de false para true 
+da requisição que contém o id do usuário e o id da requisição selecionado, desde que ela não seja um rascunho.
 */
 
 
@@ -530,6 +531,8 @@ $$ LANGUAGE plpgsql;
 DROP FUNCTION deletar_requisicao(bigint);
 
 SELECT * FROM deletar_requisicao(250)
+SELECT * FROM deletar_requisicao(44)
+SELECT * FROM deletar_requisicao(110)
 
 
 -- RF 30: MODAL LIXEIRA
