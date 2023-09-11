@@ -18,6 +18,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--A função acima recebe como parâmetro o id do usuario e retorna o id do curso que esse usuário está associado no banco de dados
+
+
 CREATE OR REPLACE FUNCTION get_id_atividade(p_descricao VARCHAR(255))
 RETURNS BIGINT AS $$
 DECLARE
@@ -27,6 +30,8 @@ BEGIN
 	RETURN id_atividade;
 END;
 $$ LANGUAGE plpgsql;
+
+--Essa função recebe uma string que necessariamente está no barema como descrição da atividade e retorna o id dessa atividade no banco
 
 CREATE OR REPLACE FUNCTION checar_certificado(p_requisicao_id BIGINT, p_id_atividade BIGINT, p_carga_horaria REAL, p_titulo VARCHAR(255))
 RETURNS BOOL AS $$
@@ -51,6 +56,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--A função acima serve pra verificar se o usuário já adicionou um certificado anteriormente
+--com a mesma atividade, carga horaria e título. Vai retornar um bool e servirá como parte da rotina de cadastrar um certificado.
+
 CREATE OR REPLACE FUNCTION cadastrar_requisicao(p_usuario_id BIGINT)
 RETURNS void AS $$
 DECLARE
@@ -60,6 +68,10 @@ BEGIN
     IF p_usuario_id IS NULL THEN
         RAISE EXCEPTION 'Informe o ID do usuário em questão';
     END IF;
+
+	IF quantidade_rascunho(p_id_usuario) = 10 THEN
+		RAISE EXCEPTION 'Você está no limite de rascunhos permitidos!';
+	END IF;
 	
 	SELECT COALESCE(MAX(id), 0) + 1 FROM requisicao INTO id_next;
 	
@@ -70,6 +82,11 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+--Essa função cria um registro na tabela requisições e associa ela ao usuário cujo id está sendo fornecido como parâmetro.
+--Também foi necessário chamar uma função que será posteriormente aqui descrita pra seguir a regra de negócio de 'Os usuários não devem ter
+--mais de 10 rascunhos'.
+--Tive que usar essa lógica pros ID's porque o pessoal do outro período não botou eles como sendo serial.
 
 CREATE OR REPLACE FUNCTION adicionar_certificado(p_requisicao_id BIGINT, p_descricao_atividade VARCHAR(255), p_carga_horaria REAL, p_titulo VARCHAR(255))
 RETURNS void AS $$
@@ -97,9 +114,12 @@ END;
 $$
 LANGUAGE plpgsql;
 
+--A função acima adiciona um registro na tabela certificado e associa a uma requisição. As informações de 
+--entrada são a descrição da atividade a carga horária que o usuário deseja que seja verificada e o título daquele certificado
+
 
 -- RF 14: CONSULTAR LISTA DE REQUISIÇÕES
-REATE OR REPLACE FUNCTION consultar_requisicoes(p_id_usuario BIGINT)
+CREATE OR REPLACE FUNCTION consultar_requisicoes(p_id_usuario BIGINT)
 RETURNS TABLE (status_requisicao VARCHAR(255), id_requisicao VARCHAR(255)) AS $$
 BEGIN
     RETURN QUERY SELECT requisicao.status_requisicao, requisicao.id_requisicao BIGINT FROM requisicao WHERE requisicao.usuario_id = p_id_usuario
@@ -108,6 +128,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 SELECT * FROM consultar_requisicoes(130); --Consultando todas as requisicões não-arquivadas do usuario 130
+
+--A função acima tem como finalidade retornar uma tabela com as colunas 'status' e 'id' das requisições que estão associadas
+--a um determinado usuário.
 
 
 -- RF 15: FILTRAR REQUISIÇÕES
@@ -130,6 +153,9 @@ DROP FUNCTION filtrar_certificados_eixo(bigint, character varying);
 
 SELECT * FROM filtrar_certificados_eixo(493,'PESQUISA'); --Filtrando certificados do usuario 493 de acordo pelo eixo pesquisa
 
+--A função acima recebe como parâmetros um id de usuário e um eixo de atividade complementar. O retorno será uma tabela com as colunas
+--titulo, eixo e carga horária dos certificados que estão associados ao usuário em questão.
+
 
 -- RF 17: VISUALISAR INDICADORES SOBRE AS REQUISIÇÕES ENVIADAS
 CREATE OR REPLACE FUNCTION verificar_status_requisicao(p_id_requisicao BIGINT)
@@ -137,12 +163,19 @@ RETURNS VARCHAR(30) AS $$
 DECLARE 
 	status VARCHAR(30);
 BEGIN
+
+	IF NOT FOUND THEN
+        status := 'Id inválido';
+    END IF;
+
     SELECT status_requisicao FROM requisicao WHERE id = p_id_requisicao INTO status;
 	RETURN status;
 END;
 $$ LANGUAGE plpgsql;
 
 SELECT verificar_status_requisicao(50); --Verificando o status de uma requisicao específica
+
+--Dado como parâmetro o id de uma requisição específica, a função acima retornará seu status, caso ela esteja no banco.
 
 CREATE OR REPLACE FUNCTION quantidade_rascunho(p_id_usuario BIGINT)
 RETURNS INTEGER AS $$
@@ -154,9 +187,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP FUNCTION quantidade_rascunho(bigint);
 
-SELECT quantidade_rascunho(11); --Verificando a quantidade de rascunhos que um aluno tem
+SELECT quantidade_rascunho(11); --Verificando a quantidade de rascunhos que um usuário possui
+
+--Dado como parâmetro o id de um usuário, a função acima retornará um inteiro que representa a quantidade de requisições com o status 'RASCUNHO'
+--que está associada a seu id no banco
 
 CREATE OR REPLACE FUNCTION horas_eixo(p_usuario_id BIGINT, p_eixo VARCHAR(15))
 RETURNS REAL AS $$
@@ -184,8 +219,14 @@ SELECT horas_ensino, horas_pesquisa, horas_extensao, horas_gestao FROM usuario W
 
 SELECT horas_eixo(297, 'ENSINO'); --Testando olhar a horas validadas de ENSINO pro aluno 297
 
+--A função acima recebe como parâmetro o id de um usuário e um eixo específico e retornará o total de horas
+--validadas que o usuário em questão possui naquele determinado eixo.
 
 -- RF 18: CRIAR RASCUNHO DE REQUISIÇÃO
+
+SELECT cadastrar_requisicao(11);
+--Essa função não foi implementada pois, por pedido do cliente, toda requisição que é criada, automaticamente
+--deverá receber o status de rascunho, então não faz sentido ter duas funções que criam o mesmo registro no banco.
 
 
 -- RF 19: DELETAR RASCUNHO DE REQUISIÇÃO
@@ -197,9 +238,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+--A função acima recebe como parâmetro o id de um usuário e retorna uma tabela com as colunas id e status
+--das requisições associadas a ele. Apesar de não explicitamente correlacionada com o RF em questão, essa função
+--é importante pois auxilia na escolha do rascunho que será deletado.
+
 CREATE OR REPLACE FUNCTION deletar_rascunho(p_usuario_id BIGINT, p_requisicao_id BIGINT)
 RETURNS void AS $$
 BEGIN
+
+	IF p_usuario_id IS NULL OR p_usuario_id <= 0 THEN
+        RAISE EXCEPTION 'ID de usuário inválido';
+    END IF;
+
+    IF p_requisicao_id IS NULL OR p_requisicao_id <= 0 THEN
+        RAISE EXCEPTION 'ID de requisição inválido';
+    END IF;
+
 	DELETE FROM certificado
 	WHERE certificado.requisicao_id = p_requisicao_id;
 	
@@ -208,6 +262,9 @@ BEGIN
 	RAISE NOTICE 'Rascunho Apagado!';
 END;
 $$ LANGUAGE plpgsql;
+
+--A função acima recebe como parâmetro o id de um usuário e o id de uma requisição, checa se essa requisição é de fato um rascunho
+--e então deleta os registros associados a aquela requisição na tabela certificados.
 
 SELECT cadastrar_requisicao(11); --Cadastra um rascunho
 
